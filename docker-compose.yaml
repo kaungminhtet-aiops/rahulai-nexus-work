@@ -72,9 +72,9 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - dash-network
+      - shared-network
 
-  app:
+  devinsights-app:
     # ★★★Build from THIS source tree. Never point this at a public registry.
     # This file previously read `image: <upstream>/<upstream>:latest` with
     # `pull_policy: always`, inherited from the project this was forked from.
@@ -91,7 +91,7 @@ services:
     # makes fetching one impossible even if someone later re-adds a registry
     # name above. There is no path from this file to a public registry.
     pull_policy: build
-    container_name: ${DASH_APP_CONTAINER:-dash-app}
+    container_name: ${DASH_APP_CONTAINER:-app-insights-prod}
     restart: unless-stopped
     expose:
       - "3000"
@@ -104,7 +104,7 @@ services:
     environment:
       - ENVIRONMENT=production
       # Database configuration
-      - DASH_DATABASE_URL=postgresql://${POSTGRES_USER:-dash}:${POSTGRES_PASSWORD:-}@postgres:5432/${POSTGRES_DB:-dash_insights}
+      - DASH_DATABASE_URL=postgresql://${POSTGRES_USER:-dash}:${POSTGRES_PASSWORD:-}@dash-postgres:5432/${POSTGRES_DB:-dash_insights}
       # Config path
       - DASH_CONFIG_PATH=/app/dash-config.yaml
       #
@@ -129,26 +129,26 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - dash-network
+      - shared-network
 
-  caddy:
-    image: caddy:2.10-alpine
-    container_name: ${DASH_CADDY_CONTAINER:-dash-caddy}
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"  # HTTP/3
-    environment:
-      - DOMAIN=${DOMAIN:-localhost}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-    networks:
-      - dash-network
+#  caddy:
+#    image: caddy:2.10-alpine
+#    container_name: ${DASH_CADDY_CONTAINER:-dash-caddy}
+#    restart: unless-stopped
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#      - "443:443/udp"  # HTTP/3
+#    environment:
+#      - DOMAIN=${DOMAIN:-localhost}
+#    volumes:
+#      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+#      - caddy_data:/data
+#      - caddy_config:/config
+#    depends_on:
+#      - app
+#    networks:
+#      - dash-network
 
 volumes:
   postgres_data:
@@ -159,11 +159,12 @@ volumes:
     driver: local
   logs_data:
     driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
+#  caddy_data:
+#    driver: local
+#  caddy_config:
+#    driver: local
 
 networks:
-  dash-network:
+  shared-network:
     driver: bridge
+    external: true
